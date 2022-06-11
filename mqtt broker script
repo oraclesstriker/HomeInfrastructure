@@ -1,6 +1,6 @@
 #!/bin/bash
 # Author Oraclesstriker
-# Purpose to install docker and respective containers
+# Purpose install mqtt broker container
 
 set -e
 clear
