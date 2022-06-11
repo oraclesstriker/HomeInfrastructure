@@ -1,0 +1,72 @@
+#!/bin/bash
+# Author Oraclesstriker
+# Purpose to install docker and respective containers
+
+set -e
+clear
+
+GREEN=$'\e[0;32m'
+YELLOW=$'\e[0;33m'
+RED=$'\e[0;31m'
+NC=$'\e[0m'
+ME=$(whoami)
+echo ""
+echo "${YELLOW}[!] oraclesstriker is quietly setting the mqtt broker, but they're going to need some things from you!"
+echo "${YELLOW}[!] Configuring underlying folders"
+mkdir docker
+mkdir docker/mqttbroker
+mkdir docker/mqttbroker/mqtt
+mkdir docker/mqttbroker/mqtt/config
+cat > docker/mqttbroker/mqtt/config/mosquitto.conf <<\EOF
+# Config file for mosquitto
+
+listener 1883
+
+persistence true
+
+persistence_location /mosquitto/data/
+
+log_dest file /mosquitto/log/mosquitto.log
+
+allow_anonymous false
+EOF
+echo "${YELLOW}[!] Building mqtt broker container"
+cat > docker/mqttbroker/docker-compose.yaml <<\EOF
+version: '3'
+
+services:
+    #mqtt
+    mosquitto:
+        container_name: mqtt
+        #hostname: mosquitto
+        restart: always
+        image: eclipse-mosquitto
+        ports:
+            - "1883:1883"
+            - "9001:9001"
+        volumes:
+            - ./mqtt/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+            - ./mqtt/data:/mosquitto/data
+            - ./mqtt/log:/mosquitto/log
+        networks:
+            - default
+
+
+networks:
+    default:
+EOF
+cd ~/docker/mqttbroker
+sudo docker-compose up -d
+echo "${YELLOW}[!] Enter mqtt broker account details"
+echo "${YELLOW}[!] Enter a Username"
+read USERNAME
+echo -n "${YELLOW}[!] Enter a Password"
+echo
+read -s PASSWORD
+docker exec -d mqtt mosquitto_passwd -c -b /mosquitto/data/pwfile $USERNAME $PASSWORD
+sudo docker stop mqtt
+echo 'password_file /mosquitto/data/pwfile' | sudo tee -a ~/docker/mqttbroker/mqtt/config/mosquitto.conf
+echo "${YELLOW}[+] Starting docker"
+cd
+docker start mqtt
+docker ps

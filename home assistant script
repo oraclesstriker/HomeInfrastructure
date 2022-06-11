@@ -1,0 +1,27 @@
+#!/bin/bash
+# Author Oraclesstriker
+# Purpose to install docker and respective containers
+
+set -e
+clear
+
+GREEN=$'\e[0;32m'
+YELLOW=$'\e[0;33m'
+RED=$'\e[0;31m'
+NC=$'\e[0m'
+
+#Creating Home Assistant Container
+echo ""
+echo "${YELLOW}[!]oraclesstriker says: \"Let me setup Home Assistant for you.\""
+docker volume create homeassistant_data
+
+docker run -d \
+  --name homeassistant \
+  --privileged \
+  --restart=unless-stopped \
+  -p 8123:8123 \
+  -v homeassistant_config:/config \
+  --network=host \
+  ghcr.io/home-assistant/home-assistant:stable
+
+echo "${YELLOW}[!]All done!"
